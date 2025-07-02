@@ -54,7 +54,7 @@ Cela va :
 
 ---
 
-### 4. Compiler le chargeur
+### 4. Compiler avec MinGw64
 
 ```bash
 x86_64-w64-mingw32-gcc loader.c syscalls.c syscalls.obj -o "C:\DEV\regsvr32.exe" -mwindows -s -O2
