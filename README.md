@@ -1,4 +1,4 @@
-# 🔓 CVE-2025-49144 – Loader furtif RC4 + Syscalls
+# 🔓 CVE-2025-49144
 
 Ce projet propose un PoC exploitant **CVE-2025-49144** via un détournement local de `regsvr32.exe` (LOLBIN hijacking), pour exécuter du shellcode Meterpreter chiffré avec **RC4** et injecté en mémoire via des **appels système directs** grâce à [SysWhispers3](https://github.com/klezVirus/SysWhispers3).
 
