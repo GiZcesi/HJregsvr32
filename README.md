@@ -5,7 +5,7 @@ Le shellcode utilisé est typiquement un **Meterpreter** généré via `msfvenom
 
 ---
 
-## 📦 Requirements
+## 📦 Requis
 
 - Python 3.x
 - `msfvenom` (Metasploit Framework)
