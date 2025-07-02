@@ -5,6 +5,15 @@ Le shellcode utilisé est typiquement un **Meterpreter** généré via `msfvenom
 
 ---
 
+## 📦 Requirements
+
+- Python 3.x
+- `msfvenom` (Metasploit Framework)
+- MinGW-w64 (`x86_64-w64-mingw32-gcc`)
+- Windows machine (pour test et debug)
+
+---
+
 ## 💡 Fonctionnalités
 
 * Chiffrement RC4 du shellcode avec clé en dur
@@ -103,8 +112,6 @@ Générés avec [SysWhispers3](https://github.com/klezVirus/SysWhispers3). Conti
 void rc4(unsigned char *data, unsigned int len, const unsigned char *key, unsigned int keylen) { ... }
 ```
 
-Fonction utilisée côté Python (chiffrement) et côté C (déchiffrement en mémoire).
-
 ---
 
 ### Fonction `junk`
@@ -116,8 +123,6 @@ void junk() {
 }
 ```
 
-Ajoute du bruit au binaire final pour modifier l’empreinte (hash) et perturber l’analyse statique.
-
 ---
 
 ### Détection sandbox
@@ -125,13 +130,6 @@ Ajoute du bruit au binaire final pour modifier l’empreinte (hash) et perturber
 ```c
 BOOL is_sandbox_environment() { ... }
 ```
-
-Détecte :
-- < 2 Go RAM
-- < 2 CPU
-- Temps d’inactivité > 5min
-- Uptime < 30 sec
-- Présence de strings VMware, VBox, QEMU dans le BIOS
 
 ---
 
@@ -145,8 +143,6 @@ Sw3NtProtectVirtualMemory(...)
 ((void(*)())baseAddr)();
 ```
 
-Utilise les appels noyau pour éviter `VirtualAlloc`, `VirtualProtect`, etc.
-
 ---
 
 ### Exécution de regsvr32.exe
@@ -157,12 +153,12 @@ strcat(sysPath, "\\regsvr32.exe");
 CreateProcessA(...);
 ```
 
-Lance la vraie version de `regsvr32.exe` pour potentiellement brouiller l’analyse comportementale.
-
+---
 
 ## 🧷 Notes complémentaires
 
 * Pense à regénérer `encrypted_payload.h` à chaque nouveau shellcode
+
 ---
 
 ## ⚠️ Avertissement légal
