@@ -10,8 +10,6 @@ Le shellcode utilisé est typiquement un **Meterpreter** généré via `msfvenom
 - Python 3.x
 - `msfvenom` (Metasploit Framework)
 - MinGW-w64 (`x86_64-w64-mingw32-gcc`)
-- `ml64.exe` (Microsoft assembler for `syscalls.asm`)
-- [SysWhispers3](https://github.com/klezVirus/SysWhispers3)
 - Windows machine (pour test et debug)
 
 ---
@@ -306,5 +304,3 @@ Termine proprement le processus via **syscall**, sans laisser de trace dans les 
 | `WinMain()`          | Orchestration : alloue, déchiffre, exécute, masque, nettoie          |
 
 ---
-
-Cette analyse peut être ajoutée au `README.md` pour enrichir la documentation technique.
